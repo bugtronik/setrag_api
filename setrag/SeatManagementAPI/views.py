@@ -3,10 +3,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from .models import Seat
 from .serializers import SeatAvailableSerializer
+from django.core.paginator import Paginator, EmptyPage
 
-@api_view()
+@api_view(['GET', 'POST'])
 def seats(request):
-    
     seats_available = Seat.objects.raw("""
                             SELECT t.id,
                                     t.number,
@@ -32,5 +32,12 @@ def seats(request):
                             AND sbr.seat_occupation_flag = 0 AND tp.label IN ('EXPRESS', 'OMNIBUS')
                             GROUP BY DATE_FORMAT(FROM_UNIXTIME(t.planned_date/1000), "%%d/%%m/%%Y"), t.number
                         """)
+    perpage = request.query_params.get('perpage', default=3)
+    page = request.query_params.get('page', default=1)
+    paginator = Paginator(seats_available,per_page=perpage)
+    try:
+        seats_available = paginator.page(number=page)
+    except EmptyPage:
+        seats_available = []
     serialized_seat_available = SeatAvailableSerializer(seats_available, many=True)
     return Response(serialized_seat_available.data)

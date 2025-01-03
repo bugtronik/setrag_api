@@ -8,3 +8,6 @@ class Seat(models.Model):
     departure_station = models.CharField(max_length=20)
     arrival_station = models.CharField(max_length=20)
     seat_occupation_flag = models.SmallIntegerField(null=True)
+    
+    def __str__(self)-> str:
+        return self.number
